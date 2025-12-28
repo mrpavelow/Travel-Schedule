@@ -4,17 +4,19 @@ import OpenAPIURLSession
 
 typealias StationsListResponse = Components.Schemas.StationsListResponse
 
-protocol StationsListServiceProtocol {
-    func get() async throws -> StationsListResponse
-}
-
-final class StationsListService: StationsListServiceProtocol {
+final class StationsListService {
     private let client: Client
     private let apikey: String
+    private let decoder: JSONDecoder
 
-    init(client: Client, apikey: String) {
+    init(
+        client: Client,
+        apikey: String,
+        decoder: JSONDecoder = JSONDecoder()
+    ) {
         self.client = client
         self.apikey = apikey
+        self.decoder = decoder
     }
 
     func get() async throws -> StationsListResponse {
@@ -26,9 +28,9 @@ final class StationsListService: StationsListServiceProtocol {
 
         let body = try response.ok.body.html
 
-        let limit = 50 * 1024 * 1024
+        let limit = 200 * 1024 * 1024
         let data = try await Data(collecting: body, upTo: limit)
 
-        return try JSONDecoder().decode(StationsListResponse.self, from: data)
+        return try decoder.decode(StationsListResponse.self, from: data)
     }
 }
