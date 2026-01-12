@@ -94,36 +94,7 @@ final class CarriersListViewModel: ObservableObject {
         }
     }
     
-    //    private func preloadCarrierLogos(client: Client, options: [TripOption]) async throws {
-    //        let keys = Set(options.compactMap { option -> CarrierKey? in
-    //            guard let system = option.carrierSystem, let code = option.carrierCode else { return nil }
-    //            return CarrierKey(system: system, code: code)
-    //        })
-    //
-    //        let missing = keys.filter { logosCache[$0] == nil }
-    //        guard !missing.isEmpty else { return }
-    //
-    //        let carrierService = CarrierService(client: client, apikey: APIConfig.apiKey)
-    //
-    //        try await withThrowingTaskGroup(of: (CarrierKey, URL?).self) { group in
-    //            for key in missing {
-    //                group.addTask {
-    //                    let resp = try await carrierService.get(code: key.code, system: key.system)
-    //                    let rawLogo = resp.carrier?.logo
-    //                    let url = self.normalizeLogoURL(rawLogo)
-    //                    return (key, url)
-    //                }
-    //            }
-    //
-    //            for try await (key, url) in group {
-    //                if let url {
-    //                    logosCache[key] = url
-    //                }
-    //            }
-    //        }
-    //    }
-    
-    // MARK: - Helpers (твои)
+    // MARK: - Helpers
     
     func apply(filters: FiltersState) {
         var result = allItems
