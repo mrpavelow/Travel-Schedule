@@ -8,7 +8,7 @@ struct StationPickerView: View {
     
     var body: some View {
         ZStack {
-            Color("YPWhiteU").ignoresSafeArea()
+            Color(.ypWhiteU).ignoresSafeArea()
             
             List {
                 ForEach(vm.stations) { station in
@@ -19,7 +19,7 @@ struct StationPickerView: View {
                     }
                     .buttonStyle(.plain)
                     .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    .listRowBackground(Color("YPWhiteU"))
+                    .listRowBackground(Color(.ypWhiteU))
                     .listRowSeparator(.hidden)
                 }
             }
@@ -35,10 +35,10 @@ struct StationPickerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $vm.query, prompt: "Введите запрос")
         .onAppear {
-            Task { await vm.loadStations(for: city) }
+            Task { vm.loadStations(for: city) }
         }
         .onChange(of: vm.query) {
-            Task { await vm.refreshFiltered(for: city) }
+            Task { vm.refreshFiltered(for: city) }
         }
     }
     
@@ -55,7 +55,7 @@ private struct StationRow: View {
         HStack(spacing: 0) {
             Text(title)
                 .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(Color("YPBlackU"))
+                .foregroundStyle(Color(.ypBlackU))
                 .padding(.leading, 16)
                 .padding(.vertical, 19)
             
@@ -63,7 +63,7 @@ private struct StationRow: View {
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color("YPGray"))
+                .foregroundStyle(Color(.ypGray))
                 .padding(.trailing, 16)
         }
         .frame(height: 60)
@@ -78,7 +78,7 @@ private struct EmptyStationSearchView: View {
             
             Text("Вариантов нет")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color("YPBlackU"))
+                .foregroundStyle(Color(.ypBlackU))
             
             Spacer()
         }

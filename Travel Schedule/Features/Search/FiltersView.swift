@@ -8,7 +8,7 @@ struct FiltersView: View {
     
     var body: some View {
         ZStack {
-            Color("YPWhiteU").ignoresSafeArea()
+            Color(.ypWhiteU).ignoresSafeArea()
             
             VStack(spacing: 0) {
                 ScrollView {
@@ -52,7 +52,7 @@ struct FiltersView: View {
                         .font(.system(size: 17, weight: .bold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
-                        .background(Color("YPBlue"))
+                        .background(Color(.ypBlue))
                         .foregroundStyle(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
@@ -72,7 +72,7 @@ struct FiltersView: View {
     private func sectionTitle(_ s: String) -> some View {
         Text(s)
             .font(.system(size: 24, weight: .bold))
-            .foregroundStyle(Color("YPBlackU"))
+            .foregroundStyle(Color(.ypBlackU))
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 12)
     }

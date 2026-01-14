@@ -26,9 +26,9 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            Color("YPWhiteU").ignoresSafeArea()
+            Color(.ypWhiteU).ignoresSafeArea()
             
-            VStack(alignment: .center, spacing: 16) {
+            VStack(spacing: 16) {
                 
                 SearchFormCard(
                     fromTitle: "Откуда",
@@ -40,16 +40,15 @@ struct MainView: View {
                     onSwap: onSwap
                 )
                 
-                if canFind {
-                    Button(action: onFind) {
-                        Text("Найти")
-                            .font(.system(size: 17, weight: .bold))
-                            .frame(width: 150, height: 60)
-                            .background(Color("YPBlue"))
-                            .foregroundStyle(Color.white)
-                            .cornerRadius(16)
-                    }
+                Button(action: onFind) {
+                    Text("Найти")
+                        .font(.system(size: 17, weight: .bold))
+                        .frame(width: 150, height: 60)
+                        .background(Color(.ypBlue))
+                        .foregroundStyle(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
+                .opacity(canFind ? 1 : 0)
                 
                 Spacer()
             }
@@ -73,7 +72,7 @@ private struct SearchFormCard: View {
     
     var body: some View {
         ZStack(alignment: .trailing) {
-            Color("YPBlue")
+            Color(.ypBlue)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
             
             HStack(spacing: 0) {
@@ -93,7 +92,7 @@ private struct SearchFormCard: View {
                     )
                 }
                 .frame(width: 259, height: 96)
-                .background(Color("YPWhite"))
+                .background(Color(.ypWhite))
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 .padding(.leading, 20)
                 .padding(.vertical, 20)
@@ -119,7 +118,7 @@ private struct SearchRow: View {
             HStack(spacing: 12) {
                 Text(displayText)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(value == nil ? Color("YPGray") : Color("YPBlack"))
+                    .foregroundStyle(value == nil ? Color(.ypGray) : Color(.ypBlack))
                     .lineLimit(1)
                 
                 Spacer()
@@ -127,7 +126,7 @@ private struct SearchRow: View {
                 if showChevron {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color("YPGray"))
+                        .foregroundStyle(Color(.ypGray))
                 }
             }
             .padding(.horizontal, 20)
@@ -152,9 +151,9 @@ private struct SwapButton: View {
         Button(action: action) {
             Image("Сhange")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color("YPBlue"))
+                .foregroundStyle(Color(.ypBlue))
                 .frame(width: 44, height: 44)
-                .background(Color("YPWhite"))
+                .background(Color(.ypWhite))
                 .clipShape(Circle())
                 .overlay(
                     Circle().stroke(Color.black.opacity(0.04), lineWidth: 1)
@@ -176,15 +175,15 @@ private struct ButtonRow: View {
             HStack {
                 Text(title)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlackU))
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color("YPGray"))
+                    .foregroundStyle(Color(.ypGray))
             }
             .padding(.horizontal, 16)
             .frame(height: 56)
-            .background(Color("YPWhiteU"))
+            .background(Color(.ypWhiteU))
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }

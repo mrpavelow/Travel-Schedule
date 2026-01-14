@@ -15,12 +15,12 @@ struct CarriersListView: View {
     
     var body: some View {
         ZStack {
-            Color("YPWhiteU").ignoresSafeArea()
+            Color(.ypWhiteU).ignoresSafeArea()
             
             VStack(spacing: 12) {
                 Text("\(fromTitle) → \(toTitle)")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlackU))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
@@ -33,7 +33,7 @@ struct CarriersListView: View {
                     Spacer()
                     Text("Вариантов нет")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(Color("YPBlackU"))
+                        .foregroundStyle(Color(.ypBlackU))
                     Spacer()
                 } else {
                     ScrollView {
@@ -58,15 +58,14 @@ struct CarriersListView: View {
                         .font(.system(size: 17, weight: .bold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
-                        .background(Color("YPBlue"))
+                        .background(Color(.ypBlue))
                         .foregroundStyle(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                .padding([.horizontal, .bottom], 16)
             }
         }
-        .task { await vm.load(from: fromCode, to: toCode, filters: filters) }
+        .task { vm.load(from: fromCode, to: toCode, filters: filters) }
         .onChange(of: filters) { _, newValue in
             vm.apply(filters: newValue)
         }

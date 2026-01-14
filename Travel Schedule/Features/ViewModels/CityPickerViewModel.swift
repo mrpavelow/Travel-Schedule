@@ -7,20 +7,19 @@ final class CityPickerViewModel: ObservableObject {
     
     private let service = ServicesContainer.shared.stationsListService
     
-    func load() async {
-        do {
-            cities = try await StationsRepository.shared.cities(query: query)
-        } catch {
-            print("❌ City load error: \(error)")
-            cities = []
-        }
+    func load() {
+        runHandled(
+            { try await StationsRepository.shared.cities(query: self.query) },
+            onSuccess: { [weak self] in self?.cities = $0 },
+            onError: { [weak self] in self?.cities = [] }
+        )
     }
-    
-    func refreshFiltered() async {
-        do {
-            cities = try await StationsRepository.shared.cities(query: query)
-        } catch {
-            cities = []
-        }
+
+    func refreshFiltered() {
+        runHandled(
+            { try await StationsRepository.shared.cities(query: self.query) },
+            onSuccess: { [weak self] in self?.cities = $0 },
+            onError: { [weak self] in self?.cities = [] }
+        )
     }
 }

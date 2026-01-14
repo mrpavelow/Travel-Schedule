@@ -10,7 +10,7 @@ struct CityPickerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("YPWhiteU").ignoresSafeArea()
+                Color(.ypWhiteU).ignoresSafeArea()
                 List {
                     ForEach(vm.cities) { city in
                         Button {
@@ -20,7 +20,7 @@ struct CityPickerView: View {
                         }
                         .buttonStyle(.plain)
                         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowBackground(Color("YPWhiteU"))
+                        .listRowBackground(Color(.ypWhiteU))
                         .listRowSeparator(.hidden)
                     }
                 }
@@ -39,16 +39,16 @@ struct CityPickerView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: onClose) {
                         Image(systemName: "chevron.left")
-                            .foregroundStyle(Color("YPBlackU"))
+                            .foregroundStyle(Color(.ypBlackU))
                     }
                 }
             }
             .searchable(text: $vm.query, prompt: "Введите запрос")
-            .onAppear {
-                Task { await vm.load() }
+            .task {
+                Task { vm.load() }
             }
             .onChange(of: vm.query) {
-                Task { await vm.refreshFiltered() }
+                Task { vm.refreshFiltered() }
             }
         }
     }
@@ -66,7 +66,7 @@ private struct CityRow: View {
         HStack(spacing: 0) {
             Text(title)
                 .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(Color("YPBlackU"))
+                .foregroundStyle(Color(.ypBlackU))
                 .padding(.leading, 16)
                 .padding(.vertical, 19)
             
@@ -74,7 +74,7 @@ private struct CityRow: View {
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color("YPGray"))
+                .foregroundStyle(Color(.ypGray))
                 .padding(.trailing, 16)
         }
         .frame(height: 60)
@@ -89,7 +89,7 @@ private struct EmptySearchView: View {
             
             Text("Город не найден")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color("YPBlackU"))
+                .foregroundStyle(Color(.ypBlackU))
             
             Spacer()
         }

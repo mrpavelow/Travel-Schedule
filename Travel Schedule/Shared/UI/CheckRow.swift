@@ -10,18 +10,18 @@ struct CheckRow: View {
             HStack(spacing: 12) {
                 Text(title)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlackU))
 
                 Spacer()
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color("YPBlackU"), lineWidth: 2)
+                        .stroke(Color(.ypBlackU), lineWidth: 2)
                         .frame(width: 22, height: 22)
 
                     if isChecked {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color("YPBlackU"))
+                            .fill(Color(.ypBlackU))
                             .frame(width: 22, height: 22)
 
                         Image(systemName: "checkmark")
@@ -45,18 +45,18 @@ struct RadioRow: View {
             HStack(spacing: 12) {
                 Text(title)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlackU))
 
                 Spacer()
 
                 ZStack {
                     Circle()
-                        .stroke(Color("YPBlackU"), lineWidth: 2)
+                        .stroke(Color(.ypBlackU), lineWidth: 2)
                         .frame(width: 22, height: 22)
 
                     if isSelected {
                         Circle()
-                            .fill(Color("YPBlackU"))
+                            .fill(Color(.ypBlackU))
                             .frame(width: 10, height: 10)
                     }
                 }

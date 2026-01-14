@@ -12,14 +12,14 @@ struct SelectionRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color("YPGray"))
+                        .foregroundStyle(Color(.ypGray))
                     Text(value ?? placeholder)
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(value == nil ? Color("YPGray") : Color("YPBlackU"))
+                        .foregroundStyle(value == nil ? Color(.ypGray) : Color(.ypBlackU))
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Color("YPGray"))
+                    .foregroundStyle(Color(.ypGray))
             }
             .padding(.vertical, 10)
         }

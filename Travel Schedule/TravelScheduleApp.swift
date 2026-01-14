@@ -8,6 +8,7 @@ struct TravelScheduleApp: App {
     var body: some Scene {
         WindowGroup {
             RootTabView()
+                .overlay { GlobalErrorOverlay() }
         }
     }
 }

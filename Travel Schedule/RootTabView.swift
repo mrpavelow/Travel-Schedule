@@ -4,11 +4,11 @@ struct RootTabView: View {
     var body: some View {
         TabView {
             MainFlowView()
-                .tabItem { Image("Schedule") }
+                .tabItem { Image(.schedule) }
             
             SettingsView()
-                .tabItem { Image("Gear") }
+                .tabItem { Image(.gear) }
         }
-        .tint(Color("YPBlackU"))
+        .tint(Color(.ypBlackU))
     }
 }

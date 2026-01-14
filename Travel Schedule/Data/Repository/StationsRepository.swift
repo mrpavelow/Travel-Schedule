@@ -22,13 +22,19 @@ final class StationsRepository: ObservableObject {
     ]
     
     private init() {
-        let client = try! APIConfig.makeClient()
-        self.service = StationsListService(client: client, apikey: APIConfig.apiKey)
+        do {
+            let client = try APIConfig.makeClient()
+            self.service = StationsListService(
+                client: client,
+                apikey: APIConfig.apiKey
+            )
+        } catch {
+            fatalError("Failed to create API client: \(error)")
+        }
     }
     
     func preload() {
-        guard cachedDTO == nil else { return }
-        guard inFlightTask == nil else { return }
+        guard cachedDTO == nil && inFlightTask == nil else { return }
         
         state = .loading
         let task = Task<StationsListDTO, Error> {
@@ -50,8 +56,13 @@ final class StationsRepository: ObservableObject {
     }
     
     func getDTO() async throws -> StationsListDTO {
-        if let cachedDTO { return cachedDTO }
-        if let inFlightTask { return try await inFlightTask.value }
+        guard cachedDTO == nil else {
+            return cachedDTO!
+        }
+        
+        guard inFlightTask == nil else {
+            return try await inFlightTask!.value
+        }
         
         state = .loading
         let task = Task<StationsListDTO, Error> {

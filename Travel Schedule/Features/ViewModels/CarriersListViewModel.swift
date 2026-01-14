@@ -26,72 +26,87 @@ final class CarriersListViewModel: ObservableObject {
     
     // MARK: - Load
     
-    func load(from: String, to: String, filters: FiltersState) async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            let client = try APIConfig.makeClient()
-            
-            let service = ScheduleBetweenStationsService(client: client, apikey: APIConfig.apiKey)
-            let response = try await service.get(from: from, to: to, date: nil)
-            let data = try APIConfig.encoder.encode(response)
-            let dto = try APIConfig.decoder.decode(SearchDTO.self, from: data)
-            
-            let segments = dto.segments ?? []
-            
-            var mapped: [TripOption] = segments.compactMap { seg in
-                let carrierLogo = seg.thread?.carrier?.logo
-                let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
-                let uid = seg.thread?.uid ?? UUID().uuidString
-                
-                let departureTime = Self.timeText(seg.departure) ?? "--:--"
-                let arrivalTime = Self.timeText(seg.arrival) ?? "--:--"
-                let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
-                let durationText = Self.durationText(seg.duration)
-                
-                let transferText: String? = {
-                    guard seg.has_transfers == true else { return nil }
-                    if let point = seg.transfer_points?.first?.title, !point.isEmpty {
-                        return "С пересадкой в \(point)"
-                    }
-                    return "С пересадкой"
-                }()
-                
-                let carrierSystem: String? = {
-                    if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
-                    if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
-                    if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
-                    return nil
-                }()
-                
-                let carrierCode: String? = {
-                    if let v = seg.thread?.carrier?.codes?.iata { return v }
-                    if let v = seg.thread?.carrier?.codes?.yandex { return v }
-                    if let v = seg.thread?.carrier?.codes?.sirena { return v }
-                    return nil
-                }()
-                
-                return TripOption(
-                    id: uid,
-                    carrierTitle: carrierTitle,
-                    carrierLogoURL: carrierLogo,
-                    transferText: transferText,
-                    departureTime: departureTime,
-                    arrivalTime: arrivalTime,
-                    durationText: durationText,
-                    dateText: dateText,
-                    carrierCode: carrierCode,
-                    carrierSystem: carrierSystem
-                )
-            }
-            self.allItems = mapped
-            apply(filters: filters)
-        } catch {
-            print("❌ /search parse error:", error)
-            self.allItems = []
-            self.items = []
+    func load(from: String, to: String, filters: FiltersState) {
+        guard !from.isEmpty, !to.isEmpty else {
+            allItems = []
+            items = []
+            return
         }
+
+        isLoading = true
+
+        runHandled(
+            { () async throws -> [TripOption] in
+                let client = try APIConfig.makeClient()
+                let service = ScheduleBetweenStationsService(client: client, apikey: APIConfig.apiKey)
+
+                let response = try await service.get(from: from, to: to, date: nil)
+                let data = try APIConfig.encoder.encode(response)
+                let dto = try APIConfig.decoder.decode(SearchDTO.self, from: data)
+
+                let segments = dto.segments ?? []
+
+                let mapped: [TripOption] = segments.compactMap { seg in
+                    let carrierLogo = seg.thread?.carrier?.logo
+                    let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
+                    let uid = seg.thread?.uid ?? UUID().uuidString
+
+                    let departureTime = Self.timeText(seg.departure) ?? "--:--"
+                    let arrivalTime = Self.timeText(seg.arrival) ?? "--:--"
+                    let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
+                    let durationText = Self.durationText(seg.duration)
+
+                    let transferText: String? = {
+                        guard seg.has_transfers == true else { return nil }
+                        if let point = seg.transfer_points?.first?.title, !point.isEmpty {
+                            return "С пересадкой в \(point)"
+                        }
+                        return "С пересадкой"
+                    }()
+
+                    let carrierSystem: String? = {
+                        if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
+                        if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
+                        if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
+                        return nil
+                    }()
+
+                    let carrierCode: String? = {
+                        if let v = seg.thread?.carrier?.codes?.iata { return v }
+                        if let v = seg.thread?.carrier?.codes?.yandex { return v }
+                        if let v = seg.thread?.carrier?.codes?.sirena { return v }
+                        return nil
+                    }()
+
+                    return TripOption(
+                        id: uid,
+                        carrierTitle: carrierTitle,
+                        carrierLogoURL: carrierLogo,
+                        transferText: transferText,
+                        departureTime: departureTime,
+                        arrivalTime: arrivalTime,
+                        durationText: durationText,
+                        dateText: dateText,
+                        carrierCode: carrierCode,
+                        carrierSystem: carrierSystem
+                    )
+                }
+
+                return mapped
+            },
+            onSuccess: { [weak self] (mapped: [TripOption]) in
+                guard let self else { return }
+                self.allItems = mapped
+                self.apply(filters: filters)
+                self.isLoading = false
+            },
+            onError: { [weak self] in
+                guard let self else { return }
+                self.allItems = []
+                self.items = []
+                self.isLoading = false
+            }
+        )
     }
     
     // MARK: - Helpers

@@ -5,18 +5,18 @@ struct TripCardView: View {
     
     var body: some View {
         VStack(spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(spacing: 12) {
                 CarrierLogoView(title: item.carrierTitle, logoURL: item.carrierLogoURL)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.carrierTitle)
                         .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(Color("YPBlackU"))
+                        .foregroundStyle(Color(.ypBlack))
                     
                     if let transfer = item.transferText, !transfer.isEmpty {
                         Text(transfer)
                             .font(.system(size: 12, weight: .regular))
-                            .foregroundStyle(Color("YPRed"))
+                            .foregroundStyle(Color(.ypRed))
                     }
                 }
                 
@@ -24,30 +24,30 @@ struct TripCardView: View {
                 
                 Text(item.dateText)
                     .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlack))
             }
             
             HStack(spacing: 10) {
                 Text(item.departureTime)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlack))
                 
                 DividerLine()
                 
                 Text(item.durationText)
                     .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlack))
                 
                 DividerLine()
                 
                 Text(item.arrivalTime)
                     .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("YPBlackU"))
+                    .foregroundStyle(Color(.ypBlack))
             }
         }
         .padding(14)
-        .background(Color("YPLightGray"))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background(Color(.ypLightGray))
+        .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 }
 
@@ -55,7 +55,7 @@ private struct DividerLine: View {
     var body: some View {
         Rectangle()
             .frame(height: 1)
-            .foregroundStyle(Color("YPGray").opacity(0.35))
+            .foregroundStyle(Color(.ypGray).opacity(0.35))
             .frame(maxWidth: .infinity)
     }
 }
@@ -94,7 +94,7 @@ private struct CarrierLogoView: View {
     private var initialsView: some View {
         Text(initials(from: title))
             .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(Color("YPGray"))
+            .foregroundStyle(Color(.ypGray))
     }
     
     private func initials(from s: String) -> String {
