@@ -5,13 +5,12 @@ struct TripOption: Identifiable, Hashable {
 
     let carrierTitle: String
     let carrierLogoURL: URL?
+    let carrierPhone: String?
+    let carrierEmail: String?
     let transferText: String?
 
     let departureTime: String
     let arrivalTime: String
     let durationText: String
     let dateText: String
-
-    let carrierCode: String?
-    let carrierSystem: String?
 }

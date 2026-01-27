@@ -47,6 +47,7 @@ final class CarriersListViewModel: ObservableObject {
                 let segments = dto.segments ?? []
 
                 let mapped: [TripOption] = segments.compactMap { seg in
+                    let contacts = CarrierContactsParser.parse(seg.thread?.carrier?.contacts)
                     let carrierLogo = seg.thread?.carrier?.logo
                     let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
                     let uid = seg.thread?.uid ?? UUID().uuidString
@@ -64,31 +65,17 @@ final class CarriersListViewModel: ObservableObject {
                         return "С пересадкой"
                     }()
 
-                    let carrierSystem: String? = {
-                        if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
-                        if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
-                        if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
-                        return nil
-                    }()
-
-                    let carrierCode: String? = {
-                        if let v = seg.thread?.carrier?.codes?.iata { return v }
-                        if let v = seg.thread?.carrier?.codes?.yandex { return v }
-                        if let v = seg.thread?.carrier?.codes?.sirena { return v }
-                        return nil
-                    }()
-
                     return TripOption(
                         id: uid,
                         carrierTitle: carrierTitle,
                         carrierLogoURL: carrierLogo,
+                        carrierPhone: contacts.phone,
+                        carrierEmail: contacts.email,
                         transferText: transferText,
                         departureTime: departureTime,
                         arrivalTime: arrivalTime,
                         durationText: durationText,
-                        dateText: dateText,
-                        carrierCode: carrierCode,
-                        carrierSystem: carrierSystem
+                        dateText: dateText
                     )
                 }
 

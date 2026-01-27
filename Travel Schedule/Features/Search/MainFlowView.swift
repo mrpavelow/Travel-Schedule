@@ -38,7 +38,9 @@ struct MainFlowView: View {
                         toCode: toStation?.code ?? "",
                         filters: filters,
                         onOpenFilters: { path.append(.filters) },
-                        onOpenCarrierCardPlaceholder: { path.append(.carrierCardPlaceholder) }
+                        onOpenCarrierCard: { title, logoURL, phone, email in
+                            path.append(.carrierCard(title: title, logoURL: logoURL, phone: phone, email: email))
+                        }
                     )
                     .toolbar(.hidden, for: .tabBar)
                     
@@ -46,8 +48,8 @@ struct MainFlowView: View {
                     FiltersView(state: $filters, onApply: { filters = $0 })
                         .toolbar(.hidden, for: .tabBar)
                     
-                case .carrierCardPlaceholder:
-                    CarrierCardView()
+                case .carrierCard(let title, let logoURL, let phone, let email):
+                    CarrierCardView(title: title, logoURL: logoURL, phone: phone, email: email)
                         .toolbar(.hidden, for: .tabBar)
                 }
             }
@@ -87,7 +89,7 @@ struct MainFlowView: View {
     enum Route: Hashable {
         case carriers
         case filters
-        case carrierCardPlaceholder
+        case carrierCard(title: String, logoURL: URL?, phone: String?, email: String?)
     }
     
     // MARK: - Actions

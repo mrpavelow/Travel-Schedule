@@ -9,7 +9,7 @@ struct CarriersListView: View {
     let filters: FiltersState
     
     let onOpenFilters: () -> Void
-    let onOpenCarrierCardPlaceholder: () -> Void
+    let onOpenCarrierCard: (_ title: String, _ logoURL: URL?, _ phone: String?, _ email: String?) -> Void
     
     @StateObject private var vm = CarriersListViewModel()
     
@@ -39,7 +39,9 @@ struct CarriersListView: View {
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             ForEach(vm.items) { item in
-                                Button { onOpenCarrierCardPlaceholder() } label: {
+                                Button {
+                                    onOpenCarrierCard(item.carrierTitle, item.carrierLogoURL, item.carrierPhone, item.carrierEmail)
+                                } label: {
                                     TripCardView(item: item)
                                 }
                                 .buttonStyle(.plain)
