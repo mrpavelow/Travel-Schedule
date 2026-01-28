@@ -3,7 +3,7 @@ import SwiftUI
 struct StoriesPreviewBar: View {
     let stories: [Story]
     let onSelect: (Int) -> Void
-
+    
     private var sorted: [(index: Int, story: Story)] {
         stories.enumerated()
             .sorted { lhs, rhs in
@@ -14,13 +14,13 @@ struct StoriesPreviewBar: View {
             }
             .map { (index: $0.offset, story: $0.element) }
     }
-
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(sorted, id: \.story.id) { item in
                     let story = item.story
-
+                    
                     Button {
                         onSelect(item.index)
                     } label: {
@@ -30,7 +30,7 @@ struct StoriesPreviewBar: View {
                                 .scaledToFill()
                                 .frame(width: 92, height: 140)
                                 .clipped()
-
+                            
                             Text(story.title)
                                 .font(.system(size: 12, weight: .regular))
                                 .foregroundColor(.white)

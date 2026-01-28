@@ -32,31 +32,31 @@ final class CarriersListViewModel: ObservableObject {
             items = []
             return
         }
-
+        
         isLoading = true
-
+        
         runHandled(
             { () async throws -> [TripOption] in
                 let client = try APIConfig.makeClient()
                 let service = ScheduleBetweenStationsService(client: client, apikey: APIConfig.apiKey)
-
+                
                 let response = try await service.get(from: from, to: to, date: nil)
                 let data = try APIConfig.encoder.encode(response)
                 let dto = try APIConfig.decoder.decode(SearchDTO.self, from: data)
-
+                
                 let segments = dto.segments ?? []
-
+                
                 let mapped: [TripOption] = segments.compactMap { seg in
                     let contacts = CarrierContactsParser.parse(seg.thread?.carrier?.contacts)
                     let carrierLogo = seg.thread?.carrier?.logo
                     let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
                     let uid = seg.thread?.uid ?? UUID().uuidString
-
+                    
                     let departureTime = Self.timeText(seg.departure) ?? "--:--"
                     let arrivalTime = Self.timeText(seg.arrival) ?? "--:--"
                     let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
                     let durationText = Self.durationText(seg.duration)
-
+                    
                     let transferText: String? = {
                         guard seg.has_transfers == true else { return nil }
                         if let point = seg.transfer_points?.first?.title, !point.isEmpty {
@@ -64,7 +64,7 @@ final class CarriersListViewModel: ObservableObject {
                         }
                         return "С пересадкой"
                     }()
-
+                    
                     return TripOption(
                         id: uid,
                         carrierTitle: carrierTitle,
@@ -78,7 +78,7 @@ final class CarriersListViewModel: ObservableObject {
                         dateText: dateText
                     )
                 }
-
+                
                 return mapped
             },
             onSuccess: { [weak self] (mapped: [TripOption]) in

@@ -16,21 +16,21 @@ extension Story {
         title: "Text1 Text1 Text1",
         description: "Some text Some text Some text Some text Some text"
     )
-
+    
     static let story2 = Story(
         backgroundImageName: "story2",
         thumbnailImageName: "story2",
         title: "Text2 Text2 Text2",
         description: "Another story description"
     )
-
+    
     static let story3 = Story(
         backgroundImageName: "story3",
         thumbnailImageName: "story3",
         title: "Text3 Text3 Text3",
         description: "Third story description"
     )
-
+    
     static var all: [Story] {
         [story1, story2, story3]
     }

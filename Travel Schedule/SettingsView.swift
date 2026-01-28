@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("isDarkThemeOverride") private var isDarkThemeOverride: Bool = false
+    @State private var isAgreementPresented: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -11,18 +12,18 @@ struct SettingsView: View {
                 VStack(spacing: 0) {
                     VStack(spacing: 0) {
                         SettingsSwitchRow(title: "Темная тема", isOn: $isDarkThemeOverride)
+                        
                         Button {
-                            //TODO: ссылка на пользовательское соглашение
-                        } label: { SettingsChevronRow(title: "Пользовательское соглашение") }
+                            isAgreementPresented = true
+                        } label: {
+                            SettingsChevronRow(title: "Пользовательское соглашение")
+                        }
                     }
-                    .background(Color(.ypWhiteU))
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
                     
                     Spacer()
                     
                     VStack(spacing: 10) {
-                        Text("Приложение использует API «Яндекс.Расписания»") //Заменить на уведомительный текст из апи (?)
+                        Text("Приложение использует API «Яндекс.Расписания»")
                             .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(Color(.ypBlackU))
                         
@@ -36,7 +37,12 @@ struct SettingsView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
-        .preferredColorScheme(isDarkThemeOverride ? .dark : nil)
+        .preferredColorScheme(isDarkThemeOverride ? .dark : .light)
+        .sheet(isPresented: $isAgreementPresented) {
+            NavigationStack {
+                AgreementView()
+            }
+        }
     }
 }
 

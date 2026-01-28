@@ -2,7 +2,7 @@ import SwiftUI
 
 struct StoryView: View {
     let story: Story
-
+    
     var body: some View {
         ZStack {
             Color.ypBlack
