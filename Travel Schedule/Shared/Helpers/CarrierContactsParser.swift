@@ -5,12 +5,10 @@ enum CarrierContactsParser {
         guard var s = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
               !s.isEmpty else { return (nil, nil) }
 
-        // Превращаем <br> в переносы
         s = s.replacingOccurrences(of: "<br>", with: "\n")
         s = s.replacingOccurrences(of: "<br/>", with: "\n")
         s = s.replacingOccurrences(of: "<br />", with: "\n")
 
-        // Часто там \r\n
         s = s.replacingOccurrences(of: "\r", with: "")
 
         let phone = firstMatch(in: s, patterns: [

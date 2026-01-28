@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct MainView: View {
+    @State private var stories: [Story] = Story.all
+    
+    @State private var showStories = false
+    @State private var selectedStoryIndex = 0
+    
     let fromCity: City?
     let toCity: City?
     let fromStation: Station?
@@ -28,32 +33,46 @@ struct MainView: View {
         ZStack {
             Color(.ypWhiteU).ignoresSafeArea()
             
-            VStack(spacing: 16) {
-                
-                SearchFormCard(
-                    fromTitle: "Откуда",
-                    fromValue: fromText,
-                    toTitle: "Куда",
-                    toValue: toText,
-                    onTapFrom: onTapFrom,
-                    onTapTo: onTapTo,
-                    onSwap: onSwap
-                )
-                
-                Button(action: onFind) {
-                    Text("Найти")
-                        .font(.system(size: 17, weight: .bold))
-                        .frame(width: 150, height: 60)
-                        .background(Color(.ypBlue))
-                        .foregroundStyle(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+            VStack(spacing: 44) {
+                StoriesPreviewBar(stories: stories) { index in
+                    selectedStoryIndex = index
+                    showStories = true
                 }
-                .opacity(canFind ? 1 : 0)
+                .padding(.top, 8)
                 
-                Spacer()
+                VStack(spacing: 16) {
+                    SearchFormCard(
+                        fromTitle: "Откуда",
+                        fromValue: fromText,
+                        toTitle: "Куда",
+                        toValue: toText,
+                        onTapFrom: onTapFrom,
+                        onTapTo: onTapTo,
+                        onSwap: onSwap
+                    )
+                    
+                    Button(action: onFind) {
+                        Text("Найти")
+                            .font(.system(size: 17, weight: .bold))
+                            .frame(width: 150, height: 60)
+                            .background(Color(.ypBlue))
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    .opacity(canFind ? 1 : 0)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+        }
+        .fullScreenCover(isPresented: $showStories) {
+            ContentView(
+                isPresented: $showStories,
+                stories: $stories,
+                startIndex: selectedStoryIndex
+            )
+            
         }
     }
 }
