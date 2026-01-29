@@ -1,5 +1,51 @@
 import SwiftUI
 
+// MARK: - 1) Public screen (loads data)
+
+struct CarrierCardScreen: View {
+    @StateObject private var vm: CarrierCardViewModel
+    
+    init(code: String, system: String?, carrierService: CarrierServiceProtocol) {
+        _vm = StateObject(wrappedValue: CarrierCardViewModel(
+            code: code,
+            system: system,
+            carrierService: carrierService
+        ))
+    }
+    
+    var body: some View {
+        ZStack {
+            Color(.ypWhiteU).ignoresSafeArea()
+            
+            if vm.isLoading {
+                ProgressView()
+            } else if let error = vm.errorText {
+                VStack(spacing: 12) {
+                    Text(error)
+                        .foregroundStyle(Color(.ypGray))
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Повторить") { vm.reload() }
+                        .font(.system(size: 17, weight: .bold))
+                }
+                .padding(24)
+            } else {
+                CarrierCardView(
+                    title: vm.title,
+                    logoURL: vm.logoURL,
+                    phone: vm.phone,
+                    email: vm.email
+                )
+            }
+        }
+        .navigationTitle("Информация о перевозчике")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await vm.loadIfNeeded() }
+    }
+}
+
+// MARK: - 2) Your UI (no VM here)
+
 struct CarrierCardView: View {
     let title: String
     let logoURL: URL?
@@ -55,14 +101,18 @@ struct CarrierCardView: View {
                 .padding(.bottom, 24)
             }
         }
-        .navigationTitle("Информация о перевозчике")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private func sanitizePhoneForTel(_ raw: String) -> String {
         raw.filter { $0.isNumber || $0 == "+" }
     }
 }
+
+// MARK: - ViewModel
+
+
+
+// MARK: - UI pieces
 
 private struct CarrierLogo: View {
     let url: URL?

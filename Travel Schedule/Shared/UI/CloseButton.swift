@@ -7,11 +7,9 @@ struct CloseButton: View {
         Button(action: action) {
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.75))
+                    .fill(Color.ypBlack)
                 
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                Image(.close)
             }
             .frame(width: 30, height: 30)
         }

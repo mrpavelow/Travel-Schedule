@@ -46,8 +46,7 @@ final class CarriersListViewModel: ObservableObject {
                 
                 let segments = dto.segments ?? []
                 
-                let mapped: [TripOption] = segments.compactMap { seg in
-                    let contacts = CarrierContactsParser.parse(seg.thread?.carrier?.contacts)
+                let mapped: [TripOption] = segments.compactMap { seg -> TripOption? in
                     let carrierLogo = seg.thread?.carrier?.logo
                     let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
                     let uid = seg.thread?.uid ?? UUID().uuidString
@@ -57,6 +56,22 @@ final class CarriersListViewModel: ObservableObject {
                     let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
                     let durationText = Self.durationText(seg.duration)
                     
+                    let carrierCode: String? = {
+                        if let v = seg.thread?.carrier?.codes?.iata { return v }
+                        if let v = seg.thread?.carrier?.codes?.yandex { return v }
+                        if let v = seg.thread?.carrier?.codes?.sirena { return v }
+                        if let v = seg.thread?.carrier?.code { return String(v) }
+                        return nil
+                    }()
+                    
+                    let carrierSystem: String? = {
+                        if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
+                        if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
+                        if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
+                        if seg.thread?.carrier?.code != nil { return "yandex" }
+                        return nil
+                    }()
+                    
                     let transferText: String? = {
                         guard seg.has_transfers == true else { return nil }
                         if let point = seg.transfer_points?.first?.title, !point.isEmpty {
@@ -65,17 +80,19 @@ final class CarriersListViewModel: ObservableObject {
                         return "С пересадкой"
                     }()
                     
+                    guard let carrierCode else { return nil }
+                    
                     return TripOption(
                         id: uid,
                         carrierTitle: carrierTitle,
                         carrierLogoURL: carrierLogo,
-                        carrierPhone: contacts.phone,
-                        carrierEmail: contacts.email,
                         transferText: transferText,
                         departureTime: departureTime,
                         arrivalTime: arrivalTime,
                         durationText: durationText,
-                        dateText: dateText
+                        dateText: dateText,
+                        carrierCode: carrierCode,
+                        carrierSystem: carrierSystem
                     )
                 }
                 

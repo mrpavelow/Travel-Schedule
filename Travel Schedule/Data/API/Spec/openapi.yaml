@@ -383,9 +383,39 @@ components:
       type: object
       additionalProperties: true
 
-    CarrierResponse:
+    CarrierCodes:
+      type: object
+      additionalProperties: false
+      properties:
+        icao: { type: string, nullable: true }
+        sirena: { type: string, nullable: true }
+        iata: { type: string, nullable: true }
+
+    Carrier:
       type: object
       additionalProperties: true
+      properties:
+        code: { type: integer, nullable: true }
+        title: { type: string, nullable: true }
+        url: { type: string, nullable: true }
+        contacts: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        codes:
+          $ref: "#/components/schemas/CarrierCodes"
+
+    CarrierResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        carrier:
+          $ref: "#/components/schemas/Carrier"
+        carriers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Carrier"
 
     StationsListResponse:
       type: object
