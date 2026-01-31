@@ -27,6 +27,13 @@ struct CarrierDTO: Decodable {
     let title: String?
     let logo: URL?
     let codes: CarrierCodesDTO?
+
+    let contacts: String?
+    let phone: String?
+    let email: String?
+    let code: Int?
+    let address: String?
+    let url: URL?
 }
 
 struct CarrierCodesDTO: Decodable {

@@ -14,7 +14,7 @@ final class CityPickerViewModel: ObservableObject {
             onError: { [weak self] in self?.cities = [] }
         )
     }
-
+    
     func refreshFiltered() {
         runHandled(
             { try await StationsRepository.shared.cities(query: self.query) },

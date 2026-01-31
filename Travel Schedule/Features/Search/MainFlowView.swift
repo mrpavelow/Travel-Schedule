@@ -3,6 +3,7 @@ import SwiftUI
 enum Direction { case from, to }
 
 struct MainFlowView: View {
+    let carrierService: CarrierServiceProtocol
     @State private var path: [Route] = []
     
     @State private var fromCity: City?
@@ -38,7 +39,10 @@ struct MainFlowView: View {
                         toCode: toStation?.code ?? "",
                         filters: filters,
                         onOpenFilters: { path.append(.filters) },
-                        onOpenCarrierCardPlaceholder: { path.append(.carrierCardPlaceholder) }
+                        onOpenCarrierCard: { code, system in
+                            let r: Route = .carrierCard(code: code, system: system)
+                            path.append(r)
+                        }
                     )
                     .toolbar(.hidden, for: .tabBar)
                     
@@ -46,8 +50,8 @@ struct MainFlowView: View {
                     FiltersView(state: $filters, onApply: { filters = $0 })
                         .toolbar(.hidden, for: .tabBar)
                     
-                case .carrierCardPlaceholder:
-                    CarrierCardView()
+                case .carrierCard(let code, let system):
+                    CarrierCardScreen(code: code, system: system, carrierService: carrierService)
                         .toolbar(.hidden, for: .tabBar)
                 }
             }
@@ -87,7 +91,7 @@ struct MainFlowView: View {
     enum Route: Hashable {
         case carriers
         case filters
-        case carrierCardPlaceholder
+        case carrierCard(code: String, system: String?)
     }
     
     // MARK: - Actions
