@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - 1) Public screen (loads data)
-
 struct CarrierCardScreen: View {
     @StateObject private var vm: CarrierCardViewModel
     
@@ -43,8 +41,6 @@ struct CarrierCardScreen: View {
         .task { await vm.loadIfNeeded() }
     }
 }
-
-// MARK: - 2) Your UI (no VM here)
 
 struct CarrierCardView: View {
     let title: String
@@ -107,12 +103,6 @@ struct CarrierCardView: View {
         raw.filter { $0.isNumber || $0 == "+" }
     }
 }
-
-// MARK: - ViewModel
-
-
-
-// MARK: - UI pieces
 
 private struct CarrierLogo: View {
     let url: URL?

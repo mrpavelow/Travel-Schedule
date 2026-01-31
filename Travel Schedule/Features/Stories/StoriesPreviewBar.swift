@@ -8,7 +8,7 @@ struct StoriesPreviewBar: View {
         stories.enumerated()
             .sorted { lhs, rhs in
                 if lhs.element.isViewed != rhs.element.isViewed {
-                    return lhs.element.isViewed == false
+                    return !lhs.element.isViewed
                 }
                 return lhs.offset < rhs.offset
             }
@@ -16,7 +16,7 @@ struct StoriesPreviewBar: View {
     }
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 12) {
                 ForEach(sorted, id: \.story.id) { item in
                     let story = item.story
@@ -57,5 +57,6 @@ struct StoriesPreviewBar: View {
             .padding(.leading, 16)
             .padding(.vertical, 8)
         }
+        .scrollIndicators(.hidden)
     }
 }

@@ -24,8 +24,6 @@ struct StoriesProgressBar: View {
     }
 
     private func progress(for index: Int) -> CGFloat {
-        if index < currentIndex { return 1 }
-        if index > currentIndex { return 0 }
-        return currentProgress
+        index < currentIndex ? 1 : index > currentIndex ? 0 : currentProgress
     }
 }
