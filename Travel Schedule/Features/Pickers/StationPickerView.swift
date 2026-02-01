@@ -3,47 +3,42 @@ import SwiftUI
 struct StationPickerView: View {
     let city: City
     let onSelect: (Station) -> Void
-    
+
     @StateObject private var vm = StationPickerViewModel()
-    
+
     var body: some View {
         ZStack {
             Color(.ypWhiteU).ignoresSafeArea()
-            
+
             Group {
-                if let error = vm.errorText {
-                    ContentUnavailableView(
-                        "Не удалось загрузить",
-                        systemImage: "wifi.exclamationmark",
-                        description: Text(error)
-                    )
-                    
-                } else if vm.isEmpty {
+                switch vm.state {
+                case .idle:
+                    stationsList
+
+                case .loading:
+                    stationsList
+
+                case .content:
+                    stationsList
+
+                case .empty:
                     ContentUnavailableView(
                         "Ничего не найдено",
                         systemImage: "magnifyingglass",
                         description: Text("Попробуйте изменить запрос.")
                     )
-                    
-                } else {
-                    List {
-                        ForEach(vm.stations) { station in
-                            Button {
-                                onSelect(station)
-                            } label: {
-                                StationRow(title: station.title)
-                            }
-                            .buttonStyle(.plain)
-                            .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                            .listRowBackground(Color(.ypWhiteU))
-                            .listRowSeparator(.hidden)
-                        }
-                    }
+
+                case .error(let error):
+                    ContentUnavailableView(
+                        "Не удалось загрузить",
+                        systemImage: "wifi.exclamationmark",
+                        description: Text(error)
+                    )
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            
+
             if isEmptySearchResult {
                 EmptyStationSearchView()
             }
@@ -55,11 +50,11 @@ struct StationPickerView: View {
         .task(id: city.title) {
             await vm.load(for: city)
         }
-        .onChange(of: vm.query) {
+        .onChange(of: vm.query) { _, _ in
             vm.applyFilter()
         }
         .toolbar {
-            if vm.errorText != nil {
+            if case .error = vm.state {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Повторить") {
                         Task { await vm.load(for: city) }
@@ -68,12 +63,28 @@ struct StationPickerView: View {
             }
         }
         .overlay {
-            if vm.isLoading {
+            if vm.state == .loading {
                 ProgressView()
             }
         }
     }
-    
+
+    private var stationsList: some View {
+        List {
+            ForEach(vm.stations) { station in
+                Button {
+                    onSelect(station)
+                } label: {
+                    StationRow(title: station.title)
+                }
+                .buttonStyle(.plain)
+                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowBackground(Color(.ypWhiteU))
+                .listRowSeparator(.hidden)
+            }
+        }
+    }
+
     private var isEmptySearchResult: Bool {
         !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         && vm.stations.isEmpty

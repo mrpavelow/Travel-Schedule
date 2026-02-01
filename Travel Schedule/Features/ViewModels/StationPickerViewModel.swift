@@ -3,9 +3,7 @@ import Foundation
 @MainActor
 final class StationPickerViewModel: ObservableObject {
     
-    @Published private(set) var isLoading: Bool = false
-    @Published private(set) var errorText: String? = nil
-    @Published private(set) var isEmpty: Bool = false
+    @Published private(set) var state: ViewState = .idle
     
     @Published var query: String = ""
     @Published private(set) var stations: [Station] = []
@@ -13,42 +11,40 @@ final class StationPickerViewModel: ObservableObject {
     private var allStations: [Station] = []
     private var loadedCityTitle: String? = nil
     
+    @MainActor
     func load(for city: City) async {
         if loadedCityTitle == city.title, !allStations.isEmpty {
-            errorText = nil
+            state = .idle
             applyFilter()
             return
         }
-        
+
         loadedCityTitle = city.title
         allStations = []
         stations = []
-        
-        isLoading = true
-        errorText = nil
-        isEmpty = false
-        defer { isLoading = false }
-        
+
+        state = .loading
+
         do {
             allStations = try await StationsRepository.shared.stations(in: city, query: "")
             applyFilter()
         } catch {
             allStations = []
             stations = []
-            isEmpty = true
-            errorText = error.localizedDescription
+            state = .error(error.localizedDescription)
         }
     }
     
+    @MainActor
     func applyFilter() {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else {
+
+        if q.isEmpty {
             stations = allStations
-            isEmpty = stations.isEmpty
-            return
+        } else {
+            stations = allStations.filter { $0.title.localizedCaseInsensitiveContains(q) }
         }
-        
-        stations = allStations.filter { $0.title.localizedCaseInsensitiveContains(q) }
-        isEmpty = stations.isEmpty
+
+        state = stations.isEmpty ? .empty : .content
     }
 }

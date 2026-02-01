@@ -5,9 +5,7 @@ import OpenAPIRuntime
 final class CarriersListViewModel: ObservableObject {
     
     @Published private(set) var items: [TripOption] = []
-    @Published private(set) var isLoading = false
-    @Published private(set) var errorText: String? = nil
-    @Published private(set) var isEmpty = false
+    @Published private(set) var state: ViewState = .idle
     
     private var allItems: [TripOption] = []
     
@@ -29,92 +27,120 @@ final class CarriersListViewModel: ObservableObject {
         return URL(string: s)
     }
     
-    // MARK: - Load (по ТЗ: async)
+    // MARK: - Load
     
+    @MainActor
     func load(from: String, to: String, filters: FiltersState) async {
-        guard !from.isEmpty, !to.isEmpty else {
-            allItems = []
-            items = []
-            isEmpty = true
-            errorText = nil
+        guard validate(from: from, to: to) else {
+            handleEmptyInput()
             return
         }
         
-        isLoading = true
-        errorText = nil
-        isEmpty = false
-        defer { isLoading = false }
+        startLoading()
         
         do {
-            let response = try await api.scheduleBetweenStations(from: from, to: to, date: nil)
-            let data = try APIConfig.encoder.encode(response)
-            let dto = try APIConfig.decoder.decode(SearchDTO.self, from: data)
-            
-            let segments = dto.segments ?? []
-            
-            let mapped: [TripOption] = segments.compactMap { seg -> TripOption? in
-                let carrierLogo = seg.thread?.carrier?.logo
-                let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
-                let uid = seg.thread?.uid ?? UUID().uuidString
-                
-                let departureTime = Self.timeText(seg.departure) ?? "--:--"
-                let arrivalTime = Self.timeText(seg.arrival) ?? "--:--"
-                let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
-                let durationText = Self.durationText(seg.duration)
-                
-                let carrierCode: String? = {
-                    if let v = seg.thread?.carrier?.codes?.iata { return v }
-                    if let v = seg.thread?.carrier?.codes?.yandex { return v }
-                    if let v = seg.thread?.carrier?.codes?.sirena { return v }
-                    if let v = seg.thread?.carrier?.code { return String(v) }
-                    return nil
-                }()
-                
-                let carrierSystem: String? = {
-                    if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
-                    if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
-                    if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
-                    if seg.thread?.carrier?.code != nil { return "yandex" }
-                    return nil
-                }()
-                
-                let transferText: String? = {
-                    guard seg.has_transfers == true else { return nil }
-                    if let point = seg.transfer_points?.first?.title, !point.isEmpty {
-                        return "С пересадкой в \(point)"
-                    }
-                    return "С пересадкой"
-                }()
-                
-                guard let carrierCode else { return nil }
-                
-                return TripOption(
-                    id: uid,
-                    carrierTitle: carrierTitle,
-                    carrierLogoURL: carrierLogo,
-                    transferText: transferText,
-                    departureTime: departureTime,
-                    arrivalTime: arrivalTime,
-                    durationText: durationText,
-                    dateText: dateText,
-                    carrierCode: carrierCode,
-                    carrierSystem: carrierSystem
-                )
-            }
-            
-            allItems = mapped
-            apply(filters: filters)
-            isEmpty = items.isEmpty
-            
+            let segments = try await fetchSegments(from: from, to: to)
+            let mapped = mapSegments(segments)
+            handleLoaded(items: mapped, filters: filters)
         } catch {
-            allItems = []
-            items = []
-            isEmpty = true
-            errorText = error.localizedDescription
+            handle(error: error)
         }
     }
     
+    // MARK: - load() methods
+    
+    private func validate(from: String, to: String) -> Bool {
+        !from.isEmpty && !to.isEmpty
+    }
+    
+    private func handleEmptyInput() {
+        allItems = []
+        items = []
+        state = .empty
+    }
+    
+    private func startLoading() {
+        state = .loading
+    }
+    
+    private func handleLoaded(items mapped: [TripOption], filters: FiltersState) {
+        allItems = mapped
+        apply(filters: filters)
+        state = self.items.isEmpty ? .empty : .content
+    }
+    
+    private func handle(error: Error) {
+        allItems = []
+        items = []
+        state = .error(error.localizedDescription)
+    }
+    
+    private func fetchSegments(from: String, to: String) async throws -> [SegmentDTO] {
+        let response = try await api.scheduleBetweenStations(from: from, to: to, date: nil)
+        let data = try APIConfig.encoder.encode(response)
+        let dto = try APIConfig.decoder.decode(SearchDTO.self, from: data)
+        return dto.segments ?? []
+    }
+    
+    private func mapSegments(_ segments: [SegmentDTO]) -> [TripOption] {
+        segments.compactMap(mapSegment(_:))
+    }
+    
+    private func mapSegment(_ seg: SegmentDTO) -> TripOption? {
+        let carrierLogo = seg.thread?.carrier?.logo
+        let carrierTitle = seg.thread?.carrier?.title ?? "Перевозчик"
+        let uid = seg.thread?.uid ?? UUID().uuidString
+        
+        let departureTime = Self.timeText(seg.departure) ?? "--:--"
+        let arrivalTime = Self.timeText(seg.arrival) ?? "--:--"
+        let dateText = Self.dayMonthFromDateOnly(seg.start_date) ?? "date nil"
+        let durationText = Self.durationText(seg.duration)
+        
+        let carrierCode = extractCarrierCode(from: seg)
+        let carrierSystem = extractCarrierSystem(from: seg)
+        let transferText = makeTransferText(from: seg)
+        
+        guard let carrierCode else { return nil }
+        
+        return TripOption(
+            id: uid,
+            carrierTitle: carrierTitle,
+            carrierLogoURL: carrierLogo,
+            transferText: transferText,
+            departureTime: departureTime,
+            arrivalTime: arrivalTime,
+            durationText: durationText,
+            dateText: dateText,
+            carrierCode: carrierCode,
+            carrierSystem: carrierSystem
+        )
+    }
+    
     // MARK: - Helpers
+    
+    private func extractCarrierCode(from seg: SegmentDTO) -> String? {
+        if let v = seg.thread?.carrier?.codes?.iata { return v }
+        if let v = seg.thread?.carrier?.codes?.yandex { return v }
+        if let v = seg.thread?.carrier?.codes?.sirena { return v }
+        if let v = seg.thread?.carrier?.code { return String(v) }
+        return nil
+    }
+    
+    private func extractCarrierSystem(from seg: SegmentDTO) -> String? {
+        if seg.thread?.carrier?.codes?.iata != nil { return "iata" }
+        if seg.thread?.carrier?.codes?.yandex != nil { return "yandex" }
+        if seg.thread?.carrier?.codes?.sirena != nil { return "sirena" }
+        if seg.thread?.carrier?.code != nil { return "yandex" }
+        return nil
+    }
+    
+    private func makeTransferText(from seg: SegmentDTO) -> String? {
+        guard seg.has_transfers == true else { return nil }
+        if let point = seg.transfer_points?.first?.title, !point.isEmpty {
+            return "С пересадкой в \(point)"
+        }
+        return "С пересадкой"
+    }
     
     func apply(filters: FiltersState) {
         var result = allItems

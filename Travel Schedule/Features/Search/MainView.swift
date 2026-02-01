@@ -110,15 +110,14 @@ private struct SearchFormCard: View {
                         showChevron: false
                     )
                 }
-                .frame(width: 259, height: 96)
+                .frame(height: 96)
                 .background(Color(.ypWhite))
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 .padding(.leading, 20)
                 .padding(.vertical, 20)
                 
-                Spacer(minLength: 0)
-                
                 SwapButton(action: onSwap)
+                    .padding(.leading, 16)
                     .padding(.trailing, 20)
             }
         }
