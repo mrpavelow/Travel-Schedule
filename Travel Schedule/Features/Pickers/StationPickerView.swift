@@ -10,17 +10,35 @@ struct StationPickerView: View {
         ZStack {
             Color(.ypWhiteU).ignoresSafeArea()
             
-            List {
-                ForEach(vm.stations) { station in
-                    Button {
-                        onSelect(station)
-                    } label: {
-                        StationRow(title: station.title)
+            Group {
+                if let error = vm.errorText {
+                    ContentUnavailableView(
+                        "Не удалось загрузить",
+                        systemImage: "wifi.exclamationmark",
+                        description: Text(error)
+                    )
+                    
+                } else if vm.isEmpty {
+                    ContentUnavailableView(
+                        "Ничего не найдено",
+                        systemImage: "magnifyingglass",
+                        description: Text("Попробуйте изменить запрос.")
+                    )
+                    
+                } else {
+                    List {
+                        ForEach(vm.stations) { station in
+                            Button {
+                                onSelect(station)
+                            } label: {
+                                StationRow(title: station.title)
+                            }
+                            .buttonStyle(.plain)
+                            .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowBackground(Color(.ypWhiteU))
+                            .listRowSeparator(.hidden)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    .listRowBackground(Color(.ypWhiteU))
-                    .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
@@ -34,11 +52,25 @@ struct StationPickerView: View {
         .navigationTitle("Выбор станции")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $vm.query, prompt: "Введите запрос")
-        .onAppear {
-            Task { vm.loadStations(for: city) }
+        .task(id: city.title) {
+            await vm.load(for: city)
         }
         .onChange(of: vm.query) {
-            Task { vm.refreshFiltered(for: city) }
+            vm.applyFilter()
+        }
+        .toolbar {
+            if vm.errorText != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Повторить") {
+                        Task { await vm.load(for: city) }
+                    }
+                }
+            }
+        }
+        .overlay {
+            if vm.isLoading {
+                ProgressView()
+            }
         }
     }
     

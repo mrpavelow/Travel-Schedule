@@ -1,17 +1,10 @@
 import SwiftUI
-import Combine
 
 struct ContentView: View {
     @Binding var isPresented: Bool
     @Binding var stories: [Story]
-    @State private var currentStoryIndex: Int
     
-    @State private var progress: CGFloat = 0
-    
-    private let storyDuration: TimeInterval = 5
-    private let tick: TimeInterval = 0.02
-    @State private var timer: Timer.TimerPublisher = Timer.publish(every: 0.02, on: .main, in: .common)
-    @State private var cancellable: Cancellable?
+    @StateObject private var vm: StoriesViewModel
     
     init(
         isPresented: Binding<Bool>,
@@ -20,10 +13,10 @@ struct ContentView: View {
     ) {
         self._isPresented = isPresented
         self._stories = stories
-        self._currentStoryIndex = State(initialValue: startIndex)
+        self._vm = StateObject(wrappedValue: StoriesViewModel(startIndex: startIndex))
     }
     
-    private var currentStory: Story { stories[currentStoryIndex] }
+    private var currentStory: Story { stories[vm.currentStoryIndex] }
     
     var body: some View {
         ZStack {
@@ -33,8 +26,8 @@ struct ContentView: View {
                 VStack(alignment: .trailing) {
                     StoriesProgressBar(
                         segmentsCount: stories.count,
-                        currentIndex: currentStoryIndex,
-                        currentProgress: progress
+                        currentIndex: vm.currentStoryIndex,
+                        currentProgress: vm.progress
                     )
                     
                     CloseButton {
@@ -49,9 +42,9 @@ struct ContentView: View {
             }
         }
         .contentShape(Rectangle())
-        .onAppear { startTimer() }
-        .onDisappear { cancellable?.cancel() }
-        .onReceive(timer) { _ in onTick() }
+        .task(id: stories.count) {
+            await vm.run(storiesCount: stories.count)
+        }
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onEnded { value in
@@ -61,11 +54,10 @@ struct ContentView: View {
                         markCurrentStoryViewed()
                         
                         if value.location.x < screenWidth / 2 {
-                            previousStory()
+                            vm.previous(storiesCount: stories.count)
                         } else {
-                            nextStory()
+                            vm.next(storiesCount: stories.count)
                         }
-                        resetTimerAndProgress()
                     }
                 }
         )
@@ -81,51 +73,11 @@ struct ContentView: View {
         )
     }
     
-    private func startTimer() {
-        timer = Timer.publish(every: tick, on: .main, in: .common)
-        cancellable = timer.connect()
-    }
-    
-    private func onTick() {
-        let step = CGFloat(tick / storyDuration)
-        let newValue = min(1, progress + step)
-        progress = newValue
-        
-        if newValue >= 1 {
-            markCurrentStoryViewed()
-            nextStory()
-            resetTimerAndProgress()
-        }
-    }
-    
-    private func nextStory() {
-        let nextIndex = currentStoryIndex + 1
-        if nextIndex < stories.count {
-            currentStoryIndex = nextIndex
-        } else {
-            currentStoryIndex = 0
-        }
-    }
-    
-    private func previousStory() {
-        let prevIndex = currentStoryIndex - 1
-        if prevIndex >= 0 {
-            currentStoryIndex = prevIndex
-        } else {
-            currentStoryIndex = stories.count - 1
-        }
-    }
-    
-    private func resetTimerAndProgress() {
-        progress = 0
-        cancellable?.cancel()
-        startTimer()
-    }
-    
     private func markCurrentStoryViewed() {
-        guard stories.indices.contains(currentStoryIndex) else { return }
-        if stories[currentStoryIndex].isViewed == false {
-            stories[currentStoryIndex].isViewed = true
+        let idx = vm.currentStoryIndex
+        guard stories.indices.contains(idx) else { return }
+        if stories[idx].isViewed == false {
+            stories[idx].isViewed = true
         }
     }
 }

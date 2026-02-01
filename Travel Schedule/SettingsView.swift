@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("isDarkThemeOverride") private var isDarkThemeOverride: Bool = false
-    @State private var isAgreementPresented: Bool = false
+    @StateObject private var vm = SettingsViewModel()
     
     var body: some View {
         NavigationStack {
@@ -11,10 +10,10 @@ struct SettingsView: View {
                 
                 VStack(spacing: 0) {
                     VStack(spacing: 0) {
-                        SettingsSwitchRow(title: "Темная тема", isOn: $isDarkThemeOverride)
+                        SettingsSwitchRow(title: "Темная тема", isOn: $vm.isDarkThemeOverride)
                         
                         Button {
-                            isAgreementPresented = true
+                            vm.openAgreement()
                         } label: {
                             SettingsChevronRow(title: "Пользовательское соглашение")
                         }
@@ -23,11 +22,11 @@ struct SettingsView: View {
                     Spacer()
                     
                     VStack(spacing: 10) {
-                        Text("Приложение использует API «Яндекс.Расписания»")
+                        Text(vm.apiNoteText)
                             .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(Color(.ypBlackU))
                         
-                        Text("Версия 1.0 (beta)")
+                        Text(vm.versionText)
                             .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(Color(.ypBlackU))
                     }
@@ -37,8 +36,8 @@ struct SettingsView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
-        .preferredColorScheme(isDarkThemeOverride ? .dark : .light)
-        .sheet(isPresented: $isAgreementPresented) {
+        .preferredColorScheme(vm.isDarkThemeOverride ? .dark : .light)
+        .sheet(isPresented: $vm.isAgreementPresented) {
             NavigationStack {
                 AgreementView()
             }
