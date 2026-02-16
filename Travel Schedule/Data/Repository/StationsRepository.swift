@@ -1,7 +1,6 @@
 import Foundation
 
-@MainActor
-final class StationsRepository: ObservableObject {
+actor StationsRepository {
     static let shared = StationsRepository()
     
     enum LoadState: Equatable {
@@ -11,9 +10,9 @@ final class StationsRepository: ObservableObject {
         case failed(String)
     }
     
-    @Published private(set) var state: LoadState = .idle
+    private let api = NetworkClient.shared
     
-    private let service: StationsListService
+    private var state: LoadState = .idle
     private var cachedDTO: StationsListDTO?
     private var inFlightTask: Task<StationsListDTO, Error>?
     
@@ -21,52 +20,33 @@ final class StationsRepository: ObservableObject {
         "train", "suburban", "bus", "plane", "water"
     ]
     
-    private init() {
-        do {
-            let client = try APIConfig.makeClient()
-            self.service = StationsListService(
-                client: client,
-                apikey: APIConfig.apiKey
-            )
-        } catch {
-            fatalError("Failed to create API client: \(error)")
-        }
+    private init() {}
+    
+    // MARK: - State
+    
+    func getState() -> LoadState {
+        state
     }
     
-    func preload() {
-        guard cachedDTO == nil && inFlightTask == nil else { return }
-        
-        state = .loading
-        let task = Task<StationsListDTO, Error> {
-            try await service.getDTO()
-        }
-        inFlightTask = task
-        
-        Task {
-            do {
-                let dto = try await task.value
-                cachedDTO = dto
-                inFlightTask = nil
-                state = .loaded
-            } catch {
-                inFlightTask = nil
-                state = .failed(error.localizedDescription)
-            }
-        }
+    // MARK: - Preload
+    
+    func preload() async {
+        _ = try? await getDTO()
     }
+    
+    // MARK: - DTO
     
     func getDTO() async throws -> StationsListDTO {
-        guard cachedDTO == nil else {
-            return cachedDTO!
-        }
+        if let cachedDTO { return cachedDTO }
         
-        guard inFlightTask == nil else {
-            return try await inFlightTask!.value
+        if let inFlightTask {
+            return try await inFlightTask.value
         }
         
         state = .loading
+        
         let task = Task<StationsListDTO, Error> {
-            try await service.getDTO()
+            try await api.stationsList()
         }
         inFlightTask = task
         
@@ -93,13 +73,13 @@ final class StationsRepository: ObservableObject {
             .flatMap { $0.settlements ?? [] }
         
         var titles = settlements.compactMap { $0.title }
-        
         titles = Array(Set(titles)).sorted()
         
         let cities = titles.map { City(title: $0) }
         
-        guard !query.isEmpty else { return cities }
-        return cities.filter { $0.title.localizedCaseInsensitiveContains(query) }
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return cities }
+        return cities.filter { $0.title.localizedCaseInsensitiveContains(q) }
     }
     
     func stations(in city: City, query: String) async throws -> [Station] {
@@ -114,6 +94,10 @@ final class StationsRepository: ObservableObject {
             .flatMap { $0.stations ?? [] }
             .filter { st in
                 guard let code = st.codes?.yandex_code, !code.isEmpty else { return false }
+                
+                if let t = st.transport_type {
+                    return allowedTransportTypes.contains(t)
+                }
                 return true
             }
         
@@ -134,10 +118,10 @@ final class StationsRepository: ObservableObject {
         
         var seen = Set<String>()
         stations = stations.filter { seen.insert($0.code).inserted }
-        
         stations.sort { $0.title < $1.title }
         
-        guard !query.isEmpty else { return stations }
-        return stations.filter { $0.title.localizedCaseInsensitiveContains(query) }
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return stations }
+        return stations.filter { $0.title.localizedCaseInsensitiveContains(q) }
     }
 }

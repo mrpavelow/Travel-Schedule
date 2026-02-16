@@ -3,12 +3,8 @@ import SwiftUI
 struct CarrierCardScreen: View {
     @StateObject private var vm: CarrierCardViewModel
     
-    init(code: String, system: String?, carrierService: CarrierServiceProtocol) {
-        _vm = StateObject(wrappedValue: CarrierCardViewModel(
-            code: code,
-            system: system,
-            carrierService: carrierService
-        ))
+    init(code: String, system: String?) {
+        _vm = StateObject(wrappedValue: CarrierCardViewModel(code: code, system: system))
     }
     
     var body: some View {
@@ -23,8 +19,10 @@ struct CarrierCardScreen: View {
                         .foregroundStyle(Color(.ypGray))
                         .multilineTextAlignment(.center)
                     
-                    Button("Повторить") { vm.reload() }
-                        .font(.system(size: 17, weight: .bold))
+                    Button("Повторить") {
+                        Task { await vm.reload() }
+                    }
+                    .font(.system(size: 17, weight: .bold))
                 }
                 .padding(24)
             } else {

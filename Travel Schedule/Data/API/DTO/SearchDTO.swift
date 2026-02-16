@@ -2,11 +2,11 @@ import Foundation
 
 // MARK: - /search response DTO
 
-struct SearchDTO: Decodable {
+struct SearchDTO: Decodable, Sendable {
     let segments: [SegmentDTO]?
 }
 
-struct SegmentDTO: Decodable {
+struct SegmentDTO: Decodable, Sendable {
     let departure: String?
     let arrival: String?
     let duration: Double?
@@ -18,12 +18,12 @@ struct SegmentDTO: Decodable {
     let thread: ThreadDTO?
 }
 
-struct ThreadDTO: Decodable {
+struct ThreadDTO: Decodable, Sendable {
     let uid: String?
     let carrier: CarrierDTO?
 }
 
-struct CarrierDTO: Decodable {
+struct CarrierDTO: Decodable, Sendable {
     let title: String?
     let logo: URL?
     let codes: CarrierCodesDTO?
@@ -36,12 +36,12 @@ struct CarrierDTO: Decodable {
     let url: URL?
 }
 
-struct CarrierCodesDTO: Decodable {
+struct CarrierCodesDTO: Decodable, Sendable {
     let iata: String?
     let yandex: String?
     let sirena: String?
 }
 
-struct TransferPointDTO: Decodable {
+struct TransferPointDTO: Decodable, Sendable {
     let title: String?
 }

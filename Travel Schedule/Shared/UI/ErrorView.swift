@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum ErrorScreenKind {
+enum ErrorScreenKind: Sendable {
     case noInternet
     case serverError
 

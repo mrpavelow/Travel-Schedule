@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 @MainActor
 final class CarrierCardViewModel: ObservableObject {
@@ -12,14 +12,13 @@ final class CarrierCardViewModel: ObservableObject {
     
     private let code: String
     private let system: String?
-    private let carrierService: CarrierServiceProtocol
     
+    private let api = NetworkClient.shared
     private var didLoad = false
     
-    init(code: String, system: String?, carrierService: CarrierServiceProtocol) {
+    init(code: String, system: String?) {
         self.code = code
         self.system = system
-        self.carrierService = carrierService
     }
     
     func loadIfNeeded() async {
@@ -28,11 +27,9 @@ final class CarrierCardViewModel: ObservableObject {
         await load()
     }
     
-    func reload() {
+    func reload() async {
         didLoad = false
-        isLoading = true
-        errorText = nil
-        Task { await loadIfNeeded() }
+        await loadIfNeeded()
     }
     
     private func load() async {
@@ -40,30 +37,29 @@ final class CarrierCardViewModel: ObservableObject {
         errorText = nil
         
         do {
-            let carrier = try await carrierService.get(code: code, system: system)
+            let carrier = try await api.carrier(code: code, system: system)
             
             title = carrier.title ?? "Перевозчик"
             phone = normalizeEmpty(carrier.phone)
             email = normalizeEmpty(carrier.email)
-            
-            if let logoStr = carrier.logo, !logoStr.isEmpty {
-                let fixed = logoStr.hasPrefix("//") ? "https:\(logoStr)" : logoStr
-                logoURL = URL(string: fixed)
-            } else {
-                logoURL = nil
-            }
+            logoURL = normalizeLogoURL(carrier.logo)
             
             isLoading = false
         } catch {
             isLoading = false
-            let msg = (error as NSError).localizedDescription
-            errorText = "Не удалось загрузить перевозчика: \(msg)"
-            print("Carrier load error:", error)
+            errorText = "Не удалось загрузить перевозчика: \(error.localizedDescription)"
         }
     }
     
     private func normalizeEmpty(_ s: String?) -> String? {
         guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return s
+    }
+    
+    private func normalizeLogoURL(_ raw: String?) -> URL? {
+        guard var s = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !s.isEmpty else { return nil }
+        if s.hasPrefix("//") { s = "https:" + s }
+        return URL(string: s)
     }
 }

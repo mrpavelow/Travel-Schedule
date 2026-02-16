@@ -2,24 +2,33 @@ import Foundation
 
 @MainActor
 final class CityPickerViewModel: ObservableObject {
+    
     @Published var query: String = ""
     @Published private(set) var cities: [City] = []
     
-    private let service = ServicesContainer.shared.stationsListService
+    private var allCities: [City] = []
     
-    func load() {
-        runHandled(
-            { try await StationsRepository.shared.cities(query: self.query) },
-            onSuccess: { [weak self] in self?.cities = $0 },
-            onError: { [weak self] in self?.cities = [] }
-        )
+    func load() async {
+        if !allCities.isEmpty {
+            applyFilter()
+            return
+        }
+        
+        do {
+            allCities = try await StationsRepository.shared.cities(query: "")
+            applyFilter()
+        } catch {
+            allCities = []
+            cities = []
+        }
     }
     
-    func refreshFiltered() {
-        runHandled(
-            { try await StationsRepository.shared.cities(query: self.query) },
-            onSuccess: { [weak self] in self?.cities = $0 },
-            onError: { [weak self] in self?.cities = [] }
-        )
+    func applyFilter() {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else {
+            cities = allCities
+            return
+        }
+        cities = allCities.filter { $0.title.localizedCaseInsensitiveContains(q) }
     }
 }

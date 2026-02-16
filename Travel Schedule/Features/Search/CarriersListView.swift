@@ -5,18 +5,18 @@ struct CarriersListView: View {
     let toTitle: String
     let fromCode: String
     let toCode: String
-    
+
     let filters: FiltersState
-    
+
     let onOpenFilters: () -> Void
     let onOpenCarrierCard: (_ code: String, _ system: String?) -> Void
-    
+
     @StateObject private var vm = CarriersListViewModel()
-    
+
     var body: some View {
         ZStack {
             Color(.ypWhiteU).ignoresSafeArea()
-            
+
             VStack(spacing: 12) {
                 Text("\(fromTitle) → \(toTitle)")
                     .font(.system(size: 24, weight: .bold))
@@ -24,36 +24,45 @@ struct CarriersListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                
-                if vm.isLoading {
+
+                switch vm.state {
+                case .loading:
                     Spacer()
                     ProgressView()
                     Spacer()
-                } else if vm.items.isEmpty {
+
+                case .empty:
                     Spacer()
                     Text("Вариантов нет")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(Color(.ypBlackU))
                     Spacer()
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            let items = vm.items
-                            ForEach(items, id: \.id) { (item: TripOption) in
-                                Button {
-                                    onOpenCarrierCard(item.carrierCode, item.carrierSystem)
-                                } label: {
-                                    TripCardView(item: item)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 90)
+
+                case .error(let error):
+                    Spacer()
+                    ContentUnavailableView(
+                        "Не удалось загрузить",
+                        systemImage: "wifi.exclamationmark",
+                        description: Text(error)
+                    )
+                    .padding(.horizontal, 16)
+
+                    Button("Повторить") {
+                        Task { await vm.load(from: fromCode, to: toCode, filters: filters) }
                     }
+                    .font(.system(size: 17, weight: .bold))
+                    .padding(.top, 12)
+
+                    Spacer()
+
+                case .content:
+                    list
+
+                case .idle:
+                    EmptyView()
                 }
             }
-            
+
             VStack {
                 Spacer()
                 Button(action: onOpenFilters) {
@@ -68,10 +77,28 @@ struct CarriersListView: View {
                 .padding([.horizontal, .bottom], 16)
             }
         }
-        .task { vm.load(from: fromCode, to: toCode, filters: filters) }
+        .task(id: "\(fromCode)-\(toCode)") {
+            await vm.load(from: fromCode, to: toCode, filters: filters)
+        }
         .onChange(of: filters) { _, newValue in
             vm.apply(filters: newValue)
         }
-        
+    }
+
+    private var list: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(vm.items, id: \.id) { item in
+                    Button {
+                        onOpenCarrierCard(item.carrierCode, item.carrierSystem)
+                    } label: {
+                        TripCardView(item: item)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 90)
+        }
     }
 }

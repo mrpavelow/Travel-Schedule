@@ -1,31 +1,27 @@
 import SwiftUI
 
-enum Direction { case from, to }
-
 struct MainFlowView: View {
-    let carrierService: CarrierServiceProtocol
     @State private var path: [Route] = []
-    
-    @State private var fromCity: City?
-    @State private var toCity: City?
-    @State private var fromStation: Station?
-    @State private var toStation: Station?
-    @State private var filters = FiltersState()
-    
-    @State private var isPickerPresented = false
-    @State private var pickingDirection: Direction = .from
     @State private var modalPath: [ModalRoute] = []
+    
+    @StateObject private var vm = MainFlowViewModel()
     
     var body: some View {
         NavigationStack(path: $path) {
             MainView(
-                fromCity: fromCity,
-                toCity: toCity,
-                fromStation: fromStation,
-                toStation: toStation,
-                onTapFrom: { openPicker(.from) },
-                onTapTo: { openPicker(.to) },
-                onSwap: swapFromTo,
+                fromCity: vm.fromCity,
+                toCity: vm.toCity,
+                fromStation: vm.fromStation,
+                toStation: vm.toStation,
+                onTapFrom: {
+                    modalPath = []
+                    vm.openPicker(.from)
+                },
+                onTapTo: {
+                    modalPath = []
+                    vm.openPicker(.to)
+                },
+                onSwap: vm.swapFromTo,
                 onFind: { path.append(.carriers) },
                 onOpenFilters: { path.append(.filters) }
             )
@@ -33,36 +29,38 @@ struct MainFlowView: View {
                 switch route {
                 case .carriers:
                     CarriersListView(
-                        fromTitle: fromStation?.title ?? fromCity?.title ?? "",
-                        toTitle: toStation?.title ?? toCity?.title ?? "",
-                        fromCode: fromStation?.code ?? "",
-                        toCode: toStation?.code ?? "",
-                        filters: filters,
+                        fromTitle: vm.fromTitle,
+                        toTitle: vm.toTitle,
+                        fromCode: vm.fromCode,
+                        toCode: vm.toCode,
+                        filters: vm.filters,
                         onOpenFilters: { path.append(.filters) },
                         onOpenCarrierCard: { code, system in
-                            let r: Route = .carrierCard(code: code, system: system)
-                            path.append(r)
+                            path.append(.carrierCard(code: code, system: system))
                         }
                     )
                     .toolbar(.hidden, for: .tabBar)
                     
                 case .filters:
-                    FiltersView(state: $filters, onApply: { filters = $0 })
+                    FiltersView(state: $vm.filters, onApply: { vm.applyFilters($0) })
                         .toolbar(.hidden, for: .tabBar)
                     
                 case .carrierCard(let code, let system):
-                    CarrierCardScreen(code: code, system: system, carrierService: carrierService)
+                    CarrierCardScreen(code: code, system: system)
                         .toolbar(.hidden, for: .tabBar)
                 }
             }
         }
-        .fullScreenCover(isPresented: $isPickerPresented) {
+        .fullScreenCover(isPresented: $vm.isPickerPresented) {
             NavigationStack(path: $modalPath) {
                 CityPickerView(
-                    title: pickingDirection == .from ? "Откуда" : "Куда",
-                    onClose: closePicker,
+                    title: vm.pickingDirection == .from ? "Откуда" : "Куда",
+                    onClose: {
+                        modalPath = []
+                        vm.closePicker()
+                    },
                     onSelect: { city in
-                        applySelectedCity(city)
+                        vm.applySelectedCity(city)
                         modalPath = [.stationPicker(city: city)]
                     }
                 )
@@ -72,13 +70,17 @@ struct MainFlowView: View {
                         StationPickerView(
                             city: city,
                             onSelect: { station in
-                                applySelectedStation(station)
-                                closePicker()
+                                vm.applySelectedStation(station)
+                                modalPath = []
+                                vm.closePicker()
                             }
                         )
                     }
                 }
             }
+        }
+        .task {
+            await StationsRepository.shared.preload()
         }
     }
     
@@ -92,43 +94,5 @@ struct MainFlowView: View {
         case carriers
         case filters
         case carrierCard(code: String, system: String?)
-    }
-    
-    // MARK: - Actions
-    
-    private func openPicker(_ dir: Direction) {
-        pickingDirection = dir
-        modalPath = []
-        isPickerPresented = true
-    }
-    
-    private func closePicker() {
-        modalPath = []
-        isPickerPresented = false
-    }
-    
-    private func applySelectedCity(_ city: City) {
-        switch pickingDirection {
-        case .from:
-            fromCity = city
-            fromStation = nil
-        case .to:
-            toCity = city
-            toStation = nil
-        }
-    }
-    
-    private func applySelectedStation(_ station: Station) {
-        switch pickingDirection {
-        case .from:
-            fromStation = station
-        case .to:
-            toStation = station
-        }
-    }
-    
-    private func swapFromTo() {
-        swap(&fromCity, &toCity)
-        swap(&fromStation, &toStation)
     }
 }

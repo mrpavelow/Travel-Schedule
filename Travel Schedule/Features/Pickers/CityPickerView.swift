@@ -45,10 +45,10 @@ struct CityPickerView: View {
             }
             .searchable(text: $vm.query, prompt: "Введите запрос")
             .task {
-                Task { vm.load() }
+                await vm.load()
             }
             .onChange(of: vm.query) {
-                Task { vm.refreshFiltered() }
+                vm.applyFilter()
             }
         }
     }

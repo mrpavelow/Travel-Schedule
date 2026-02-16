@@ -3,29 +3,42 @@ import SwiftUI
 struct StationPickerView: View {
     let city: City
     let onSelect: (Station) -> Void
-    
+
     @StateObject private var vm = StationPickerViewModel()
-    
+
     var body: some View {
         ZStack {
             Color(.ypWhiteU).ignoresSafeArea()
-            
-            List {
-                ForEach(vm.stations) { station in
-                    Button {
-                        onSelect(station)
-                    } label: {
-                        StationRow(title: station.title)
-                    }
-                    .buttonStyle(.plain)
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    .listRowBackground(Color(.ypWhiteU))
-                    .listRowSeparator(.hidden)
+
+            Group {
+                switch vm.state {
+                case .idle:
+                    stationsList
+
+                case .loading:
+                    stationsList
+
+                case .content:
+                    stationsList
+
+                case .empty:
+                    ContentUnavailableView(
+                        "Ничего не найдено",
+                        systemImage: "magnifyingglass",
+                        description: Text("Попробуйте изменить запрос.")
+                    )
+
+                case .error(let error):
+                    ContentUnavailableView(
+                        "Не удалось загрузить",
+                        systemImage: "wifi.exclamationmark",
+                        description: Text(error)
+                    )
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            
+
             if isEmptySearchResult {
                 EmptyStationSearchView()
             }
@@ -34,14 +47,44 @@ struct StationPickerView: View {
         .navigationTitle("Выбор станции")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $vm.query, prompt: "Введите запрос")
-        .onAppear {
-            Task { vm.loadStations(for: city) }
+        .task(id: city.title) {
+            await vm.load(for: city)
         }
-        .onChange(of: vm.query) {
-            Task { vm.refreshFiltered(for: city) }
+        .onChange(of: vm.query) { _, _ in
+            vm.applyFilter()
+        }
+        .toolbar {
+            if case .error = vm.state {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Повторить") {
+                        Task { await vm.load(for: city) }
+                    }
+                }
+            }
+        }
+        .overlay {
+            if vm.state == .loading {
+                ProgressView()
+            }
         }
     }
-    
+
+    private var stationsList: some View {
+        List {
+            ForEach(vm.stations) { station in
+                Button {
+                    onSelect(station)
+                } label: {
+                    StationRow(title: station.title)
+                }
+                .buttonStyle(.plain)
+                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowBackground(Color(.ypWhiteU))
+                .listRowSeparator(.hidden)
+            }
+        }
+    }
+
     private var isEmptySearchResult: Bool {
         !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         && vm.stations.isEmpty
